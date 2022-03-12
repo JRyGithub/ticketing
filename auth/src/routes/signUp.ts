@@ -1,9 +1,13 @@
 import express, {Request,Response} from 'express'
-import { body,validationResult } from 'express-validator'
+import { User } from '../models/user'
+import { body } from 'express-validator'
+import { BadRequestError } from '../errors/badRequestError'
+import jwt from 'jsonwebtoken'
+import { validateRequest } from '../middlewares/validateRequest'
 
 const router = express.Router()
 
-router.get(`/api/users/signUp`,[
+router.post(`/api/users/signUp`,[
     body(`email`)
         .isEmail()
         .exists()
@@ -13,14 +17,28 @@ router.get(`/api/users/signUp`,[
         .isLength({min:4,max:20})
         .exists()
         .withMessage(`Password must be between 4 and 20 characters.`)
-], (req : Request,res : Response) => {
+],
+validateRequest, 
+async(req : Request,res : Response) => {
+    const {email,password} = req.body
+    const existingUser = await User.findOne({email})
+    if(existingUser) {
+        throw new BadRequestError(`Email Already in Use`)
+    }
 
-    const errors = validationResult(req)
-    if(!errors.isEmpty()) return res.status(400).send(errors.array())
+    const user = User.build({email,password})
+    await user.save()
+    //Generate JWT
+    const userJwt = jwt.sign({
+        id: user.id,
+        email: user.email,
+    }, process.env.JWT_KEY!)
 
-    const { email,password} = req.body
-    console.log(`Creating a user`)
-    res.send({})
+    //Store It on Session
+    req.session = {
+        jwt: userJwt
+    }
+    res.status(201).send(user)
 })
 
 export {router as signUpRouter}
