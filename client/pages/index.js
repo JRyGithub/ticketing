@@ -1,4 +1,13 @@
-const Index = () => {
-    return <h1>Landing!</h1>
+import axios from "axios"
+import buildClient from "../api/buildClient"
+
+const LandingPage = ({currentUser}) => {
+    return currentUser ? <h1>You are signed In!</h1> : <h1>You are signed out!</h1>
 }
-export default Index
+
+LandingPage.getInitialProps = async(context) => {
+    const client = buildClient(context)
+    const { data } = await client.get(`/api/users/currentUser`)
+    return data  
+}
+export default LandingPage

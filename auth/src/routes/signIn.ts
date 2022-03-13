@@ -10,12 +10,10 @@ const router = express.Router()
 router.post(`/api/users/signIn`,[
     body(`email`)
         .isEmail()
-        .exists()
         .withMessage(`Email must be valid`),
     body(`password`)
         .trim()
         .notEmpty()
-        .exists()
         .withMessage(`You must apply a password`)
 ],
 validateRequest,
