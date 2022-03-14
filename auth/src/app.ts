@@ -7,8 +7,7 @@ import { currentUserRouter } from './routes/currentUser'
 import { signInRouter } from './routes/signIn'
 import { signUpRouter } from './routes/signUp'
 import { signOutRouter } from './routes/signOut'
-import { errorHandler } from './middlewares/errorHandler'
-import { NotFoundError } from './errors/notFoundError'
+import { errorHandler,NotFoundError } from '@ryweb.solutions/common'
 
 const app = express()
 app.set(`trust proxy`, true)

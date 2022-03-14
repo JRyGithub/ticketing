@@ -1,9 +1,8 @@
 import express, {Request,Response} from 'express'
 import { User } from '../models/user'
 import { body } from 'express-validator'
-import { BadRequestError } from '../errors/badRequestError'
+import { BadRequestError,validateRequest } from '@ryweb.solutions/common'
 import jwt from 'jsonwebtoken'
-import { validateRequest } from '../middlewares/validateRequest'
 
 const router = express.Router()
 

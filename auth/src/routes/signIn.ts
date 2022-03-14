@@ -1,7 +1,6 @@
 import express, {Request,Response} from 'express'
 import {body} from 'express-validator'
-import { BadRequestError } from '../errors/badRequestError'
-import { validateRequest } from '../middlewares/validateRequest'
+import { BadRequestError,validateRequest } from '@ryweb.solutions/common'
 import { User } from '../models/user'
 import { Password } from '../services/password'
 import jwt from 'jsonwebtoken'
