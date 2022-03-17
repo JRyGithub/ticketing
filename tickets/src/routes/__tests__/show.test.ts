@@ -10,7 +10,7 @@ it(`returns a 404 if ticket does not exist`,async() => {
 })
 it(`returns the ticket if the ticket is found`,async() => {
     const title = `concert`
-    const price = 20
+    const price = `20`
     const response = await request(app)
             .post(`/api/tickets`)
             .set(`Cookie`,global.signIn())

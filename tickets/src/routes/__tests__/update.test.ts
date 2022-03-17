@@ -35,7 +35,7 @@ it(`returns 401 if use does not own ticket`,async() => {
             price: 100
         })
     await request(app)
-        .put(`/api/ticket/${response.body.id}`)
+        .put(`/api/tickets/${response.body.id}`)
         .set(`Cookie`,global.signIn())
         .send({
             title: `NewString`,
@@ -78,14 +78,14 @@ it(`it updates ticket provided valid inputs`,async() => {
         .set(`Cookie`, cookie)
         .send({
             title: `MakeBelieve`,
-            price: 100
+            price: `100`
         })
    await request(app)
         .put(`/api/tickets/${response.body.id}`)
         .set(`Cookie`,cookie)
         .send({
             title: `newTitle`,
-            price: 23
+            price: `23`
         })
         .expect(200)
     
@@ -94,6 +94,6 @@ it(`it updates ticket provided valid inputs`,async() => {
         .send()
 
     expect(ticketResponse.body.title).toEqual(`newTitle`)
-    expect(ticketResponse.body.title).toEqual(23)
+    expect(ticketResponse.body.price).toEqual(`23`)
     
 })
