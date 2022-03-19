@@ -1,7 +1,9 @@
 import { NotFoundError,validateRequest,requireAuth,NotAuthorizedError } from '@ryweb.solutions/common'
 import express, {Request,Response } from 'express'
 import { body } from 'express-validator'
+import { TicketUpdatedPublisher } from '../events/publishers/ticketUpdatedPublisher'
 import { Ticket } from '../models/ticket'
+import { natsWrapper } from '../natsWrapper'
 
 const router = express.Router()
 
@@ -22,7 +24,12 @@ router.put(`/api/tickets/:id`,requireAuth,[
 
     ticket.set({ title: req.body.title, price: req.body.price })
     await ticket.save()
-    
+    new TicketUpdatedPublisher(natsWrapper.client).publish({
+        id: ticket.id,
+        title: ticket.title,
+        price: ticket.price,
+        userId: ticket.userId,
+    })
     res.send(ticket)
 })
 

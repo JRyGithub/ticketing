@@ -2,6 +2,8 @@ import { requireAuth,validateRequest } from "@ryweb.solutions/common";
 import express, { Request,Response } from "express";
 import { Ticket } from "../models/ticket";
 import { body } from "express-validator";
+import { TicketCreatedPublisher } from "../events/publishers/ticketCreatedPublisher";
+import { natsWrapper } from "../natsWrapper";
 const router = express.Router()
 
 router.post(`/api/tickets`,requireAuth,[
@@ -16,6 +18,12 @@ router.post(`/api/tickets`,requireAuth,[
     const { title,price } = req.body
     const ticket = Ticket.build({ title,price, userId: req.currentUser!.id })
     await ticket.save()
+    new TicketCreatedPublisher(natsWrapper.client).publish({
+        id: ticket.id,
+        title: ticket.title,
+        price: ticket.price,
+        userId: ticket.userId,
+    })
 
     res.status(201).send(ticket)
 })
