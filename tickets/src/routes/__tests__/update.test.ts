@@ -2,14 +2,15 @@ import request from 'supertest'
 import { app } from '../../app'
 import mongoose from 'mongoose'
 import { natsWrapper } from '../../natsWrapper'
+import { Ticket } from '../../models/ticket'
 
 jest.mock(`../../__mocks__/natsWrapper.ts`)
 
-it(`returns 404 if ticket does not exist`,async() => {
+it(`returns 404 if ticket does not exist`, async () => {
     const id = new mongoose.Types.ObjectId().toHexString()
     await request(app)
         .put(`/api/tickets/${id}`)
-        .set(`Cookie`,global.signIn())
+        .set(`Cookie`, global.signIn())
         .send({
             title: `hi`,
             price: 120
@@ -17,7 +18,7 @@ it(`returns 404 if ticket does not exist`,async() => {
         .expect(404)
 })
 
-it(`returns 401 if user not auth`,async() => {
+it(`returns 401 if user not auth`, async () => {
     const id = new mongoose.Types.ObjectId().toHexString()
     await request(app)
         .put(`/api/tickets/${id}`)
@@ -28,7 +29,7 @@ it(`returns 401 if user not auth`,async() => {
         .expect(401)
 })
 
-it(`returns 401 if use does not own ticket`,async() => {
+it(`returns 401 if use does not own ticket`, async () => {
     const response = await request(app)
         .post(`/api/tickets`)
         .set(`Cookie`, global.signIn())
@@ -38,7 +39,7 @@ it(`returns 401 if use does not own ticket`,async() => {
         })
     await request(app)
         .put(`/api/tickets/${response.body.id}`)
-        .set(`Cookie`,global.signIn())
+        .set(`Cookie`, global.signIn())
         .send({
             title: `NewString`,
             price: 2
@@ -46,7 +47,7 @@ it(`returns 401 if use does not own ticket`,async() => {
         .expect(401)
 })
 
-it(`returns 400 if invalid title etc`,async() => {
+it(`returns 400 if invalid title etc`, async () => {
     const cookie = global.signIn()
     const response = await request(app)
         .post(`/api/tickets`)
@@ -57,7 +58,7 @@ it(`returns 400 if invalid title etc`,async() => {
         })
     await request(app)
         .put(`/api/tickets/${response.body.id}`)
-        .set(`Cookie`,cookie)
+        .set(`Cookie`, cookie)
         .send({
             title: ``,
             price: 23
@@ -65,7 +66,7 @@ it(`returns 400 if invalid title etc`,async() => {
         .expect(400)
     await request(app)
         .put(`/api/tickets/${response.body.id}`)
-        .set(`Cookie`,cookie)
+        .set(`Cookie`, cookie)
         .send({
             title: `fsdfsdf`,
             price: 0
@@ -73,7 +74,7 @@ it(`returns 400 if invalid title etc`,async() => {
         .expect(400)
 })
 
-it(`it updates ticket provided valid inputs`,async() => {
+it(`it updates ticket provided valid inputs`, async () => {
     const cookie = global.signIn()
     const response = await request(app)
         .post(`/api/tickets`)
@@ -82,25 +83,25 @@ it(`it updates ticket provided valid inputs`,async() => {
             title: `MakeBelieve`,
             price: `100`
         })
-   await request(app)
+    await request(app)
         .put(`/api/tickets/${response.body.id}`)
-        .set(`Cookie`,cookie)
+        .set(`Cookie`, cookie)
         .send({
             title: `newTitle`,
             price: `23`
         })
         .expect(200)
-    
+
     const ticketResponse = await request(app)
         .get(`/api/tickets/${response.body.id}`)
         .send()
 
     expect(ticketResponse.body.title).toEqual(`newTitle`)
     expect(ticketResponse.body.price).toEqual(`23`)
-    
+
 })
 
-it(`publishes an event`,async() => {
+it(`publishes an event`, async () => {
     const cookie = global.signIn()
     const response = await request(app)
         .post(`/api/tickets`)
@@ -109,9 +110,9 @@ it(`publishes an event`,async() => {
             title: `MakeBelieve`,
             price: `100`
         })
-   await request(app)
+    await request(app)
         .put(`/api/tickets/${response.body.id}`)
-        .set(`Cookie`,cookie)
+        .set(`Cookie`, cookie)
         .send({
             title: `newTitle`,
             price: `23`
@@ -119,4 +120,28 @@ it(`publishes an event`,async() => {
         .expect(200)
 
     expect(natsWrapper.client.publish).toHaveBeenCalled()
+})
+
+
+it(`Rejects updates if reseverd`, async () => {
+    const cookie = global.signIn()
+    const response = await request(app)
+        .post(`/api/tickets`)
+        .set(`Cookie`, cookie)
+        .send({
+            title: `MakeBelieve`,
+            price: `100`
+        })
+    const ticket = await Ticket.findById(response.body.id)
+    ticket?.set({ orderId: new mongoose.Types.ObjectId().toHexString() })       
+
+
+    await request(app)
+        .put(`/api/tickets/${response.body.id}`)
+        .set(`Cookie`, cookie)
+        .send({
+            title: `newTitle`,
+            price: `23`
+        })
+        .expect(400)
 })

@@ -1,4 +1,4 @@
-import { NotFoundError,validateRequest,requireAuth,NotAuthorizedError } from '@ryweb.solutions/common'
+import { NotFoundError,validateRequest,requireAuth,NotAuthorizedError, BadRequestError } from '@ryweb.solutions/common'
 import express, {Request,Response } from 'express'
 import { body } from 'express-validator'
 import { TicketUpdatedPublisher } from '../events/publishers/ticketUpdatedPublisher'
@@ -22,10 +22,13 @@ router.put(`/api/tickets/:id`,requireAuth,[
 
     if(ticket.userId !== req.currentUser!.id) throw new NotAuthorizedError()
 
+    if(ticket.orderId) throw new BadRequestError(`Ticket is reserved`)
+    
     ticket.set({ title: req.body.title, price: req.body.price })
     await ticket.save()
     new TicketUpdatedPublisher(natsWrapper.client).publish({
         id: ticket.id,
+        version: ticket.version,
         title: ticket.title,
         price: ticket.price,
         userId: ticket.userId,

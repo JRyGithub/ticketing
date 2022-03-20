@@ -1,6 +1,9 @@
 import mongoose from 'mongoose'
 import { app } from './app'
 import { natsWrapper } from './natsWrapper'
+import { OrderCreatedListener } from './events/listeners/orderCreatedListener'
+import { OrderCancelledListener } from './events/listeners/orderCancelledListener'
+
 const start = async() =>{
     if(!process.env.JWT_KEY) throw new Error(`JWT_KEY must be defined`)
     if(!process.env.MONGO_URI) throw new Error(`Mongo uri must be defined`)
@@ -16,6 +19,9 @@ const start = async() =>{
         })
         process.on(`SIGNINT`, () => natsWrapper.client.close())
         process.on(`SIGTERM`, () => natsWrapper.client.close())
+
+        new OrderCreatedListener(natsWrapper.client).listen()
+        new OrderCancelledListener(natsWrapper.client).listen()
 
         await mongoose.connect(process.env.MONGO_URI)
         console.log(`Connected to MongoDB`)

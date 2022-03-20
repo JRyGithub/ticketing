@@ -1,7 +1,7 @@
 import { OrderStatus } from "@ryweb.solutions/common"
 import mongoose from "mongoose"
 import { TicketDoc } from './ticket'
-
+import { updateIfCurrentPlugin } from "mongoose-update-if-current"
 //An interface that describes the properties
 //that are required to create a new Order
 interface OrderAttrs {
@@ -22,6 +22,7 @@ interface OrderDoc extends mongoose.Document{
     expiresAt: Date
     userId: string
     ticket: TicketDoc
+    version: number
 }
 
 const orderSchema = new mongoose.Schema({
@@ -51,7 +52,8 @@ const orderSchema = new mongoose.Schema({
         }
     }
 })
-
+orderSchema.set(`versionKey`,`version`)
+orderSchema.plugin(updateIfCurrentPlugin)
 orderSchema.statics.build = (attrs: OrderAttrs) => {
     return new Order(attrs)
 }

@@ -30,7 +30,6 @@ async(req:Request,res:Response) => {
     
     const expiration = new Date()
     expiration.setSeconds(expiration.getSeconds() + EXPIRATION_WINDOW)
-
     const order = Order.build({
         userId: req.currentUser!.id,
         status: OrderStatus.Created,
@@ -42,6 +41,7 @@ async(req:Request,res:Response) => {
     //Publish the event
     new OrderCreatedPublisher(natsWrapper.client).publish({
         id: order.id,
+        version: order.version,
         status: order.status,
         userId: order.userId,
         expiresAt: order.expiresAt.toISOString(),

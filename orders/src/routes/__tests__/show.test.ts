@@ -1,3 +1,4 @@
+import mongoose from 'mongoose'
 import request from 'supertest'
 import { app } from '../../app'
 import { Ticket } from '../../models/ticket'
@@ -5,7 +6,8 @@ import { Ticket } from '../../models/ticket'
 it(`fetches the order`,async() => {
     const ticket = Ticket.build({
         title: `hi`,
-        price: 10
+        price: `10`,
+        id: new mongoose.Types.ObjectId().toHexString(),
     })
     await ticket.save()
     const user = global.signIn()
@@ -27,7 +29,8 @@ it(`fetches the order`,async() => {
 it(`returns a error if tries to get another users order`,async() => {
     const ticket = Ticket.build({
         title: `hi`,
-        price: 10
+        price: `10`,
+        id: new mongoose.Types.ObjectId().toHexString(),
     })
     await ticket.save()
     const user = global.signIn()

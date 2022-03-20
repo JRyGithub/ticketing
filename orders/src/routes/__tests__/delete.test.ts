@@ -4,11 +4,13 @@ import { app } from '../../app'
 import { Order } from '../../models/order'
 import { Ticket } from '../../models/ticket'
 import { natsWrapper } from '../../natsWrapper'
+import mongoose from 'mongoose'
 
 it(`marks an order as cancelled`,async() => {
     const ticket = Ticket.build({
         title: `hello`,
-        price: 10,
+        price: `10`,
+        id: new mongoose.Types.ObjectId().toHexString(),
     })
     await ticket.save()
     const user = global.signIn()
@@ -34,7 +36,8 @@ it(`marks an order as cancelled`,async() => {
 it(`emits a order cancelled event`,async() => {
     const ticket = Ticket.build({
         title: `hello`,
-        price: 10,
+        price: `10`,
+        id: new mongoose.Types.ObjectId().toHexString(),
     })
     await ticket.save()
     const user = global.signIn()
