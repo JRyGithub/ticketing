@@ -1,9 +1,7 @@
 import mongoose from 'mongoose'
 import { app } from './app'
-import { ExpirationCompleteListener } from './events/listeners/expirationCompleteListener'
-import { TicketCreatedListener } from './events/listeners/ticketCreatedListener'
-import { TicketUpdatedListener } from './events/listeners/ticketUpdatedListener'
 import { natsWrapper } from './natsWrapper'
+
 const start = async() =>{
     if(!process.env.JWT_KEY) throw new Error(`JWT_KEY must be defined`)
     if(!process.env.MONGO_URI) throw new Error(`Mongo uri must be defined`)
@@ -20,9 +18,6 @@ const start = async() =>{
         process.on(`SIGNINT`, () => natsWrapper.client.close())
         process.on(`SIGTERM`, () => natsWrapper.client.close())
 
-        new TicketCreatedListener(natsWrapper.client).listen()
-        new TicketUpdatedListener(natsWrapper.client).listen()
-        new ExpirationCompleteListener(natsWrapper.client).listen()
 
         await mongoose.connect(process.env.MONGO_URI)
         console.log(`Connected to MongoDB`)
