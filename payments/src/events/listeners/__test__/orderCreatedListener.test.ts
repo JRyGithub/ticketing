@@ -1,19 +1,12 @@
 import { OrderCreatedListener } from "../orderCreatedListener"
 import { natsWrapper } from "../../../natsWrapper"
-import { Ticket } from "../../../models/ticket"
 import { OrderCreatedEvent, OrderStatus } from "@ryweb.solutions/common"
 import mongoose from "mongoose"
 import { Message } from "node-nats-streaming"
+import { Order } from "../../../models/order"
 
 const setup = async () => {
     const listener = new OrderCreatedListener(natsWrapper.client)
-
-    const ticket = Ticket.build({
-        title: `concert`,
-        price: `10`,
-        userId: `ads`
-    })
-    await ticket.save()
 
     const data: OrderCreatedEvent[`data`] = {
         id: new mongoose.Types.ObjectId().toHexString(),
@@ -22,8 +15,8 @@ const setup = async () => {
         userId: `adad`,
         expiresAt: `fsdfsd`,
         ticket: {
-            id: ticket.id,
-            price: ticket.price,
+            id: `kfsdd` ,
+            price: `10`,
         },
     }
     //@ts-ignore
@@ -31,33 +24,24 @@ const setup = async () => {
         ack: jest.fn()
     }
 
-    return {listener,ticket,data,msg}
+    return {listener,data,msg}
 }
-it(`sets userid of the ticket`,async() => {
-    const {listener,ticket,data,msg} = await setup()
+it(`replicates the order info`,async() => {
+    const {listener,data,msg} = await setup()
 
     listener.onMessage(data,msg)
 
-    const updatedTicket = await Ticket.findById(ticket.id)
+    const order = await Order.findById(data.id)
 
-    expect(updatedTicket!.orderId).toEqual(data.id)
+    expect(order!.price).toEqual(data.ticket.price)
+
+    
 })
 it(`acks message`,async() => {
-    const {listener,ticket,data,msg} = await setup()
+    const {listener,data,msg} = await setup()
 
     listener.onMessage(data,msg)
 
     expect(msg.ack).toHaveBeenCalled()
-})
-
-it(`publishes an event`,async () => {
-    const {listener,ticket,data,msg} = await setup()
-    listener.onMessage(data,msg)
-
-    expect(natsWrapper.client.publish).toHaveBeenCalled()
-
-    const updatedTicket = JSON.parse((natsWrapper.client.publish as jest.Mock).mock.calls[0][1])
-
-    expect(data.id).toEqual(updatedTicket.orderId)
-
+    
 })

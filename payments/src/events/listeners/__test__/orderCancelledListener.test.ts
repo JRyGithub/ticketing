@@ -1,46 +1,53 @@
 import { natsWrapper } from "../../../natsWrapper"
-import { Ticket } from "../../../models/ticket"
-import { OrderCancelledEvent } from "@ryweb.solutions/common"
+import { OrderCancelledEvent, OrderStatus } from "@ryweb.solutions/common"
 import mongoose from "mongoose"
 import { Message } from "node-nats-streaming"
 import { OrderCancelledListener } from "../orderCancelledListener"
+import { Order } from "../../../models/order"
 
 const setup = async () => {
     const listener = new OrderCancelledListener(natsWrapper.client)
 
     const orderId = new mongoose.Types.ObjectId().toHexString()
-    const ticket = Ticket.build({
-        title: `concert`,
+    const order = Order.build({
+        id: orderId,
+        status: OrderStatus.Created,
         price: `10`,
-        userId: `ads`
+        userId: `jsnjfa`,
+        version: 0,
     })
-    ticket.set({ orderId })
-    await ticket.save()
+    order.save()
 
     const data: OrderCancelledEvent[`data`] = {
-        id: new mongoose.Types.ObjectId().toHexString(),
-        version: 0,
+        id: order.id,
+        version: 1,
         ticket: {
-            id: ticket.id,
+            id: `fsdmdsa`,
         },
     }
+
     //@ts-ignore
     const msg:Message = {
         ack: jest.fn()
     }
 
-    return {listener,ticket,orderId,data,msg}
+    return {listener,order,data,msg}
 }
 
 it(`it updates, publishes events and acks`,async() => {
-    const {listener,ticket,data,orderId,msg} = await setup()
+    const {listener,data,order,msg} = await setup()
 
-    listener.onMessage(data,msg)
+    await listener.onMessage(data,msg)
 
-    const cancelledTicket = await Ticket.findById(ticket.id)
+    const updatedOrder = await Order.findById(order.id)
 
-    expect(cancelledTicket!.orderId).not.toBeDefined()
+    expect(updatedOrder!.status).toEqual(OrderStatus.Cancelled)
+})
+it(`acks message`,async() => {
+    const {listener,data,order,msg} = await setup()
+
+    await listener.onMessage(data,msg)
+
     expect(msg.ack).toHaveBeenCalled()
-    expect(natsWrapper.client.publish).toHaveBeenCalled()
 
 })

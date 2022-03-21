@@ -3,6 +3,7 @@ import 'express-async-errors'
 import { json } from 'body-parser'
 import cookieSession from 'cookie-session'
 import { errorHandler,NotFoundError,currentUser } from '@ryweb.solutions/common'
+import { CreateChargeRouter } from './routes/new'
 
 const app = express()
 app.set(`trust proxy`, true)
@@ -14,6 +15,9 @@ app.use(
     })
 )
 app.use(currentUser)
+
+
+app.use(CreateChargeRouter)
 
 //Could use next(new NotFoundError())
 app.all('*',async()=> {

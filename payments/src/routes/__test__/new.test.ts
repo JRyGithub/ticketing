@@ -1,0 +1,58 @@
+import { OrderStatus } from "@ryweb.solutions/common"
+import mongoose from "mongoose"
+import request from "supertest"
+import { app } from "../../app"
+import { Order } from "../../models/order"
+
+it(`Throw 404 when purchasing none existant order`, async () => {
+    await request(app)
+        .post(`/api/payments`)
+        .set(`Cookie`, global.signIn())
+        .send({
+            token: `dfjsnfs`,
+            orderId: new mongoose.Types.ObjectId().toHexString()
+        })
+        .expect(404)
+
+
+})
+it(`Throw 401 when purchase does not belong to user`, async () => {
+    const order = Order.build({
+        id: new mongoose.Types.ObjectId().toHexString(),
+        userId: new mongoose.Types.ObjectId().toHexString(),
+        version: 0,
+        price: `20`,
+        status: OrderStatus.Created,
+    })
+    await order.save()
+
+    await request(app)
+        .post(`/api/payments`)
+        .set(`Cookie`, global.signIn())
+        .send({
+            token: `dfjsnfs`,
+            orderId: order.id
+        })
+        .expect(401)
+})
+it(`Throw 400 when order is already cancelled`, async () => {
+    const userId = new mongoose.Types.ObjectId().toHexString()
+
+    const order = Order.build({
+        id: new mongoose.Types.ObjectId().toHexString(),
+        userId,
+        version: 0,
+        price: `20`,
+        status: OrderStatus.Cancelled,
+    })
+    await order.save()
+
+    await request(app)
+        .post(`/api/payments`)
+        .set(`Cookie`, global.signIn(userId))
+        .send({
+            token: `dfjsnfs`,
+            orderId: order.id
+        })
+        .expect(400)
+})
